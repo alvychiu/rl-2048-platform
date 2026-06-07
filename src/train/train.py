@@ -42,6 +42,11 @@ def evaluate_agent(agent: DQNAgent, cfg: Config, episodes: int, seed: int) -> di
         reward_structure_corner_min_tile=cfg.reward_structure_corner_min_tile,
         reward_high_tile_coef=cfg.reward_high_tile_coef,
         reward_high_tile_min=cfg.reward_high_tile_min,
+        reward_snake_coef=cfg.reward_snake_coef,
+        reward_snake_corner=cfg.reward_snake_corner,
+        reward_snake_ratio=cfg.reward_snake_ratio,
+        discouraged_action=cfg.discouraged_action,
+        discouraged_action_penalty=cfg.discouraged_action_penalty,
     )
     max_tiles, scores = [], []
     for i in range(episodes):
@@ -80,6 +85,11 @@ def train(cfg: Config) -> dict:
         reward_structure_corner_min_tile=cfg.reward_structure_corner_min_tile,
         reward_high_tile_coef=cfg.reward_high_tile_coef,
         reward_high_tile_min=cfg.reward_high_tile_min,
+        reward_snake_coef=cfg.reward_snake_coef,
+        reward_snake_corner=cfg.reward_snake_corner,
+        reward_snake_ratio=cfg.reward_snake_ratio,
+        discouraged_action=cfg.discouraged_action,
+        discouraged_action_penalty=cfg.discouraged_action_penalty,
     )
     agent = DQNAgent(
         obs_shape=(4, 4),
