@@ -24,6 +24,16 @@ def test_load_full_yaml():
     assert cfg.hidden_sizes == [256, 256, 128]
 
 
+def test_load_full_v5_yaml():
+    cfg = Config.from_yaml("configs/full_v5.yaml")
+    assert cfg.reward_snake_coef == 4.0
+    assert cfg.reward_snake_corner == "bottom-left"
+    assert cfg.reward_snake_ratio == 0.7
+    assert cfg.discouraged_action == 0
+    assert cfg.discouraged_action_penalty == -0.5
+    assert cfg.run_name == "full_v5"
+
+
 def test_load_full_v4_yaml():
     cfg = Config.from_yaml("configs/full_v4.yaml")
     assert cfg.total_steps == 800000
