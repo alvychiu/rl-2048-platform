@@ -208,6 +208,12 @@ tests/              # 测试
 - **full_v3 训练结果** `runs/2026-06-07_15-27-39_full_v3`：600k 步，1427s；best_median=128（退步）；正式评估 median=128, max=512，**S2 FAIL**。
 - **v4 配置**（2026-06-07）：`full_v4.yaml`（800k）— 快 exploitation(eps→0.01@160k)、强推512(里程碑60+high_tile)、弱化corner(log关闭+min128+权重0.25)、稳定训练(lr↓/batch↑/grad_clip)、后期空间(gamma0.998/max_steps15k)。
 - **人类决策**：✅ 启动 full_v4 训练（2026-06-07）
+- **full_v4 训练结果** `runs/2026-06-07_16-06-54_full_v4`：800k 步，2292s，5731 ep；best_median=128（仍未提升）。
+- **v5 蛇形策略**（2026-06-07）：将「角落+蛇形+方向纪律」人工策略编码进奖励——
+  - `board.snake_gradient_score`：固定左下角，蛇形几何递减权重势能（主导塑形项）
+  - 方向纪律：`discouraged_action=0(UP)` + `discouraged_action_penalty`，抑制误触向上打乱布局
+  - 配置 `full_v5.yaml`（800k）/ `full_v5_smoke.yaml`（50k）
+  - 烟雾 `runs/2026-06-07_16-57-24_full_v5_smoke`：50k 步，192s，单局频繁到 256；启动 full_v5 完整训练。
 
 ### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
 - **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium
