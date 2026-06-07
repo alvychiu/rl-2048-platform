@@ -26,6 +26,34 @@ def test_act_returns_valid_action():
     assert a in {0, 1, 2, 3}
 
 
+def test_rv1_act_respects_legal_mask_exploration():
+    """RV-1: ε=1 探索时也只在合法动作中选择。"""
+    agent = make_agent(eps_start=1.0, eps_end=1.0, eps_decay_steps=1)
+    rng = np.random.default_rng(0)
+    obs = np.zeros((4, 4), dtype=np.float32)
+    mask = np.array([False, False, True, False])  # 仅 LEFT 合法
+    for _ in range(20):
+        assert agent.act(obs, step=0, rng=rng, legal_mask=mask) == 2
+
+
+def test_rv1_act_greedy_respects_legal_mask():
+    """RV-1: 贪心时非法动作被屏蔽，只在合法动作取 argmax。"""
+    agent = make_agent()
+    obs = np.zeros((4, 4), dtype=np.float32)
+    mask = np.array([False, True, False, False])  # 仅 DOWN 合法
+    for _ in range(10):
+        assert agent.act_greedy(obs, legal_mask=mask) == 1
+
+
+def test_rv1_no_legal_falls_back():
+    """无合法动作（终局）时不崩溃。"""
+    agent = make_agent()
+    obs = np.zeros((4, 4), dtype=np.float32)
+    mask = np.array([False, False, False, False])
+    a = agent.act_greedy(obs, legal_mask=mask)
+    assert a in {0, 1, 2, 3}
+
+
 def test_epsilon_decays():
     agent = make_agent(eps_start=1.0, eps_end=0.1, eps_decay_steps=100)
     assert agent.epsilon(0) == 1.0

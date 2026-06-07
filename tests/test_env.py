@@ -82,6 +82,19 @@ def test_tc012_step_before_reset_raises():
         env.step(0)
 
 
+def test_legal_action_mask_in_info_and_method():
+    env = make_env()
+    _, info = env.reset(seed=0)
+    assert "legal_action_mask" in info
+    assert info["legal_action_mask"].shape == (4,)
+    # 仅左侧不可动的棋盘
+    env._board = np.array(
+        [[2, 4, 8, 16], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.int64
+    )
+    mask = env.legal_action_mask()
+    assert mask[2] == False  # LEFT 非法
+
+
 def test_illegal_move_marked_in_info():
     env = make_env()
     env.reset(seed=0)

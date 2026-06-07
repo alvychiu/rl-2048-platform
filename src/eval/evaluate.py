@@ -16,7 +16,7 @@ import numpy as np
 
 from src.agents.dqn import DQNAgent
 from src.env.game_2048_env import Game2048Env
-from src.utils.checkpoint import load_into_agent
+from src.utils.checkpoint import load_checkpoint, load_into_agent
 
 S2_THRESHOLD = 512
 
@@ -28,7 +28,7 @@ def _run_episodes(policy_fn, episodes: int, max_steps: int, seed: int) -> dict:
         obs, info = env.reset(seed=seed + i)
         done = False
         while not done:
-            action = policy_fn(obs, env)
+            action = policy_fn(obs, env, info)
             obs, _, terminated, truncated, info = env.step(action)
             done = terminated or truncated
         max_tiles.append(info["max_tile"])
@@ -45,22 +45,32 @@ def _run_episodes(policy_fn, episodes: int, max_steps: int, seed: int) -> dict:
 def evaluate(
     ckpt: str,
     episodes: int = 100,
-    hidden_sizes=(256, 256),
+    hidden_sizes=None,
     max_steps: int = 5000,
     seed: int = 2024,
     device: str = "cpu",
 ) -> dict:
+    # RV-3：优先从检查点 meta 读取网络结构，避免手填 --hidden 不一致。
+    meta = load_checkpoint(ckpt, map_location="cpu").get("meta", {})
+    if hidden_sizes is None:
+        hidden_sizes = meta.get("hidden_sizes", (256, 256))
+
     agent = DQNAgent(
         obs_shape=(4, 4), hidden_sizes=tuple(hidden_sizes), device=device
     )
     load_into_agent(agent, ckpt, map_location="cpu")
 
     trained = _run_episodes(
-        lambda obs, env: agent.act_greedy(obs), episodes, max_steps, seed
+        lambda obs, env, info: agent.act_greedy(
+            obs, legal_mask=info["legal_action_mask"]
+        ),
+        episodes,
+        max_steps,
+        seed,
     )
     rng = np.random.default_rng(seed)
     baseline = _run_episodes(
-        lambda obs, env: int(rng.integers(env.action_space.n)),
+        lambda obs, env, info: int(rng.integers(env.action_space.n)),
         episodes,
         max_steps,
         seed,
@@ -83,7 +93,11 @@ def main() -> None:
     parser.add_argument("--ckpt", required=True, help="检查点路径，如 runs/<id>/best.pt")
     parser.add_argument("--episodes", type=int, default=100)
     parser.add_argument(
-        "--hidden", type=int, nargs="+", default=[256, 256], help="网络隐层（需与训练一致）"
+        "--hidden",
+        type=int,
+        nargs="+",
+        default=None,
+        help="网络隐层；默认从检查点 meta 自动读取（RV-3）",
     )
     parser.add_argument("--max-steps", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=2024)

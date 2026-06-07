@@ -10,8 +10,16 @@ from src.utils.checkpoint import save_checkpoint
 def _make_ckpt(tmp_path, hidden=(32, 32)):
     agent = DQNAgent(obs_shape=(4, 4), hidden_sizes=hidden, device="cpu")
     path = str(tmp_path / "best.pt")
-    save_checkpoint(path, agent.state_dict(), meta={"step": 1})
+    # RV-3：meta 中保存网络结构，供 evaluate 自动读取
+    save_checkpoint(path, agent.state_dict(), meta={"step": 1, "hidden_sizes": list(hidden)})
     return path
+
+
+def test_rv3_eval_auto_reads_hidden_from_meta(tmp_path):
+    """RV-3: 不传 --hidden 时从检查点 meta 自动读取网络结构。"""
+    ckpt = _make_ckpt(tmp_path, hidden=(48, 24))
+    result = evaluate(ckpt, episodes=2, hidden_sizes=None, max_steps=200)
+    assert "trained" in result
 
 
 def test_tc048_eval_outputs_stats(tmp_path):

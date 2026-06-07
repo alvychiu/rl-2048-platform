@@ -21,7 +21,14 @@ class ExperimentLogger:
     def __init__(self, log_root: str, run_name: str = "", config: dict | None = None):
         ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         suffix = f"_{run_name}" if run_name else ""
-        self.run_dir = os.path.join(log_root, f"{ts}{suffix}")
+        base = os.path.join(log_root, f"{ts}{suffix}")
+        # RV-4：同秒同名冲突时自动追加序号，避免 FileExistsError 崩溃。
+        run_dir = base
+        n = 2
+        while os.path.exists(run_dir):
+            run_dir = f"{base}-{n}"
+            n += 1
+        self.run_dir = run_dir
         os.makedirs(self.run_dir, exist_ok=False)
 
         self.writer = SummaryWriter(log_dir=self.run_dir)

@@ -33,7 +33,7 @@ def evaluate_agent(agent: DQNAgent, cfg: Config, episodes: int, seed: int) -> di
         obs, info = env.reset(seed=seed + i)
         done = False
         while not done:
-            action = agent.act_greedy(obs)
+            action = agent.act_greedy(obs, legal_mask=info["legal_action_mask"])
             obs, _, terminated, truncated, info = env.step(action)
             done = terminated or truncated
         max_tiles.append(info["max_tile"])
@@ -69,14 +69,14 @@ def train(cfg: Config) -> dict:
     print(f"[cfg ] device={agent.device} | seed={cfg.seed} | run={logger.run_dir}")
     logger.log_text(f"device={agent.device} seed={cfg.seed} total_steps={cfg.total_steps}")
 
-    obs, _ = env.reset(seed=cfg.seed)
+    obs, info = env.reset(seed=cfg.seed)
     ep_reward, ep_len, ep_count = 0.0, 0, 0
     best_median = -1.0
     last_loss = 0.0
     t0 = time.time()
 
     for step in range(1, cfg.total_steps + 1):
-        action = agent.act(obs, step, rng)
+        action = agent.act(obs, step, rng, legal_mask=info["legal_action_mask"])
         next_obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
         buffer.push(obs, action, reward, next_obs, terminated)
@@ -110,12 +110,16 @@ def train(cfg: Config) -> dict:
                     f"| max_tile {info['max_tile']:>5} | loss {last_loss:.3f} "
                     f"| eps {agent.epsilon(step):.3f}"
                 )
-            obs, _ = env.reset()
+            obs, info = env.reset()
             ep_reward, ep_len = 0.0, 0
 
         if step % cfg.save_every == 0:
             path = os.path.join(logger.run_dir, f"ckpt_{step}.pt")
-            save_checkpoint(path, agent.state_dict(), meta={"step": step})
+            save_checkpoint(
+                path,
+                agent.state_dict(),
+                meta={"step": step, "hidden_sizes": list(cfg.hidden_sizes)},
+            )
             logger.log_text(f"[ckpt] saved {path}")
 
         if step % cfg.eval_every == 0:
@@ -134,7 +138,11 @@ def train(cfg: Config) -> dict:
                 save_checkpoint(
                     best_path,
                     agent.state_dict(),
-                    meta={"step": step, **stats},
+                    meta={
+                        "step": step,
+                        "hidden_sizes": list(cfg.hidden_sizes),
+                        **stats,
+                    },
                 )
                 logger.log_text(
                     f"[best] step={step} median={best_median} -> {best_path}"

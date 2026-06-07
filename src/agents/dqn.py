@@ -58,21 +58,42 @@ class DQNAgent:
         frac = step / max(1, self.eps_decay_steps)
         return self.eps_start + frac * (self.eps_end - self.eps_start)
 
-    @torch.no_grad()
-    def act(self, obs: np.ndarray, step: int, rng: np.random.Generator) -> int:
-        """ε-greedy 选动作。"""
-        eps = self.epsilon(step)
-        if rng.random() < eps:
-            return int(rng.integers(self.num_actions))
-        obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
-        q = self.q_net(obs_t)
-        return int(torch.argmax(q, dim=1).item())
+    def _legal_indices(self, legal_mask) -> list[int]:
+        if legal_mask is None:
+            return list(range(self.num_actions))
+        idx = [i for i, ok in enumerate(np.asarray(legal_mask).tolist()) if ok]
+        # 无合法动作（终局）时退回全集，避免空选择崩溃。
+        return idx if idx else list(range(self.num_actions))
 
     @torch.no_grad()
-    def act_greedy(self, obs: np.ndarray) -> int:
-        """纯贪心（评估用）。"""
+    def act(
+        self,
+        obs: np.ndarray,
+        step: int,
+        rng: np.random.Generator,
+        legal_mask=None,
+    ) -> int:
+        """ε-greedy 选动作；提供 legal_mask 时仅在合法动作中选择（RV-1）。"""
+        legal = self._legal_indices(legal_mask)
+        eps = self.epsilon(step)
+        if rng.random() < eps:
+            return int(legal[rng.integers(len(legal))])
+        return self._greedy_among(obs, legal)
+
+    @torch.no_grad()
+    def act_greedy(self, obs: np.ndarray, legal_mask=None) -> int:
+        """纯贪心（评估用）；提供 legal_mask 时仅在合法动作中取 argmax（RV-1）。"""
+        return self._greedy_among(obs, self._legal_indices(legal_mask))
+
+    @torch.no_grad()
+    def _greedy_among(self, obs: np.ndarray, legal: list[int]) -> int:
         obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
-        return int(torch.argmax(self.q_net(obs_t), dim=1).item())
+        q = self.q_net(obs_t).squeeze(0)
+        # 把非法动作的 Q 置为 -inf，再取 argmax
+        mask = torch.full_like(q, float("-inf"))
+        legal_t = torch.tensor(legal, dtype=torch.int64, device=self.device)
+        mask[legal_t] = q[legal_t]
+        return int(torch.argmax(mask).item())
 
     def learn(self, batch) -> float:
         """一次梯度更新，返回 loss 标量。"""

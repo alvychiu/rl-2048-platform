@@ -32,7 +32,8 @@ def save_checkpoint(
 def load_checkpoint(path: str, map_location: str = "cpu") -> dict[str, Any]:
     if not os.path.exists(path):
         raise FileNotFoundError(f"checkpoint not found: {path}")
-    payload = torch.load(path, map_location=map_location)
+    # RV-2：weights_only=True，仅允许张量与基础类型，避免 pickle 代码执行风险。
+    payload = torch.load(path, map_location=map_location, weights_only=True)
     if "state_dict" not in payload:
         raise ValueError(f"invalid checkpoint format (no state_dict): {path}")
     return payload

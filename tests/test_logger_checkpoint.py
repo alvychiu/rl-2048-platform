@@ -27,14 +27,14 @@ def test_tc026_log_scalars(tmp_path):
 
 
 def test_tc027_unique_run_dirs(tmp_path):
-    import time
-
+    """RV-4: 同秒同名也应得到唯一目录（自动追加序号）。"""
     l1 = ExperimentLogger(str(tmp_path), run_name="x")
-    time.sleep(1.1)  # 时间戳精确到秒，确保不同
     l2 = ExperimentLogger(str(tmp_path), run_name="x")
-    assert l1.run_dir != l2.run_dir
-    l1.close()
-    l2.close()
+    l3 = ExperimentLogger(str(tmp_path), run_name="x")
+    dirs = {l1.run_dir, l2.run_dir, l3.run_dir}
+    assert len(dirs) == 3
+    for lg in (l1, l2, l3):
+        lg.close()
 
 
 def _agent():
