@@ -1,0 +1,65 @@
+# full_v5：编码「角落 + 蛇形」人工策略，目标稳定 512 并冲击 1024。
+#
+# 策略映射：
+# 1. 核心布局（角落锚定 + 蛇形递减）→ reward_snake_*（势能差塑形，主导项）
+#    固定左下角为最大数终极归宿，按蛇形顺序几何递减权重。
+# 2. 滑动纪律（锁定向上键）→ discouraged_action=0(UP) + penalty
+#    误触向上会打乱底层大数布局，给负奖励抑制。
+# 3. 中后期：保护最高位/避免孤岛/留周转空间
+#    → 蛇形势能(锁大数列) + reward_empty_coef(留空间) + reward_high_tile_coef
+# 4. 强推里程碑：512 高额奖励，给 1024/2048 留出学习空间(gamma/max_steps)
+total_steps: 800000
+learning_starts: 8000
+train_freq: 4
+target_update_interval: 8000
+
+lr: 0.00005
+gamma: 0.998
+batch_size: 256
+buffer_size: 300000
+hidden_sizes: [512, 512, 256]
+grad_clip_max_norm: 5.0
+
+eps_start: 1.0
+eps_end: 0.01
+eps_decay_steps: 160000
+
+log_dir: runs
+save_every: 50000
+eval_every: 50000
+eval_episodes: 50
+
+max_steps: 15000
+illegal_penalty: -0.1
+merge_reward_scale: 0.03
+reward_empty_coef: 0.12
+reward_new_max_bonus: 15.0
+reward_milestones:
+  128: 3
+  256: 15
+  512: 60
+  1024: 150
+
+reward_high_tile_coef: 0.08
+reward_high_tile_min: 256
+
+# 蛇形梯度势能为主导塑形项（取代 v3/v4 的零散 corner 结构分）
+reward_snake_coef: 4.0
+reward_snake_corner: bottom-left
+reward_snake_ratio: 0.7
+
+# 弱化旧结构分，避免与蛇形势能冲突（仅保留极轻单调/平滑）
+reward_structure_coef: 0.1
+reward_structure_corner: 0.0
+reward_structure_corner_log_scale: false
+reward_structure_corner_min_tile: 128
+reward_structure_monotonicity: 0.3
+reward_structure_smoothness: 0.04
+
+# 方向纪律：锁定「向上」(action=0) 为禁用键
+discouraged_action: 0
+discouraged_action_penalty: -0.5
+
+seed: 42
+device: auto
+run_name: full_v5

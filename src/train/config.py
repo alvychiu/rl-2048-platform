@@ -34,6 +34,11 @@ class Config:
     reward_structure_corner_min_tile: int = 0
     reward_high_tile_coef: float = 0.0
     reward_high_tile_min: int = 256
+    reward_snake_coef: float = 0.0
+    reward_snake_corner: str = "bottom-left"
+    reward_snake_ratio: float = 0.7
+    discouraged_action: int = -1
+    discouraged_action_penalty: float = 0.0
 
     # 训练总量
     total_steps: int = 20000
