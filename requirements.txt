@@ -1,0 +1,10 @@
+# 2048 RL 训练实验平台 — 依赖锁定
+# 运行环境：Apple M2 (ARM64, macOS)，Python 3.10.11
+# PyTorch 使用 CPU/MPS 版（PyPI 默认 wheel，无 CUDA）
+
+gymnasium==0.29.1
+torch==2.2.2
+numpy==1.26.4
+tensorboard==2.16.2
+PyYAML==6.0.1
+pytest==8.1.1

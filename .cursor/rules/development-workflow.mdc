@@ -1,0 +1,63 @@
+---
+description: AI Driven Delivery System - G0→G4 门控研发体系总规则。所有研发活动必须遵守。
+alwaysApply: true
+---
+
+# AI Driven Delivery System — 研发交付总规则
+
+## 核心理念
+
+- **AI 负责执行**：分析、生成文档、拆解任务、写代码、跑测试。
+- **Human 负责决策**：在每个 Gate 做"是否放行"的判断。
+- AI 永远不能替人类通过 Gate。
+
+## 门控流程（强制）
+
+```
+G0 → G1 → G2 → G2.5 → G3 → G3.5 → G4
+```
+
+| Gate  | 名称        | Skill 目录                      | 主要产物                          |
+| ----- | ----------- | ------------------------------- | --------------------------------- |
+| G0    | Requirement | `.cursor/skills/G0-Requirement` | `artifacts/specifications/spec.md`|
+| G1    | Story-Test  | `.cursor/skills/G1-Story-Test`  | `stories.md` / `testcases.md`     |
+| G2    | Planning    | `.cursor/skills/G2-Planning`    | `artifacts/planning/tasks.md`     |
+| G2.5  | Prototype   | `.cursor/skills/G2.5-Prototype` | `artifacts/prototype/prototype.md`|
+| G3    | Development | `.cursor/skills/G3-Development`  | `src/` + 更新 `tasks.md`          |
+| G3.5  | Review      | `.cursor/skills/G3.5-Review`     | `artifacts/reviews/review.md`     |
+| G4    | Acceptance  | `.cursor/skills/G4-Acceptance`   | `artifacts/acceptance/acceptance.md` |
+
+## 强制规则（不可违反）
+
+1. **强制遵守 G0→G4**：任何研发工作必须按门控顺序推进。
+2. **禁止跳过 Gate**：未拿到上一阶段的 Human 放行确认，不得进入下一阶段。
+3. **进入任何阶段前，必须先读取上一阶段的输出产物**，确认其存在且已被人类确认。
+4. **所有过程文档必须写入 `artifacts/` 对应子目录**，禁止散落到其他位置。
+5. **Skill 产出代码时只能写入 `src/` 目录**（及必要的项目配置文件），不得写入其他目录。
+6. **开发（G3）前必须读取**：
+   - `artifacts/specifications/spec.md`
+   - `artifacts/stories/stories.md`
+   - `artifacts/planning/tasks.md`
+7. **验收（G4）前必须读取**：`artifacts/testcases/testcases.md`
+8. **未完成 Review（G3.5）不得进入验收（G4）**。
+9. **Review 中存在 High 风险项，禁止发布**（必须先降级或修复后重新 Review）。
+
+## 执行约束
+
+- **G3 一次只允许完成一个 Task**，完成后必须更新 `tasks.md` 的状态，并输出变更文件列表与测试方法。禁止一次实现多个 Task。
+- 每个阶段开始时，AI 必须显式声明：当前 Gate、已读取的上阶段产物、本阶段目标。
+- 每个阶段结束时，AI 必须输出 **Human Decision Gate 请求**，等待人类放行后才继续。
+
+## Human Decision Gate 模板
+
+```
+==================== HUMAN GATE: G{n} ====================
+阶段产物：<文件路径>
+关键决策点：
+  - <需要人类确认的事项 1>
+  - <需要人类确认的事项 2>
+请回复：APPROVE（放行） / REJECT（打回，附原因）
+=========================================================
+```
+
+只有收到人类的 `APPROVE` 才能进入下一 Gate。

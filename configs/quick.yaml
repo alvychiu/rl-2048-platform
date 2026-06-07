@@ -1,0 +1,27 @@
+# quick 配置：分钟级验证训练管线是否跑通（非追求效果）。
+total_steps: 3000
+learning_starts: 200
+train_freq: 4
+target_update_interval: 500
+
+lr: 0.001
+gamma: 0.99
+batch_size: 64
+buffer_size: 10000
+hidden_sizes: [128, 128]
+
+eps_start: 1.0
+eps_end: 0.1
+eps_decay_steps: 2000
+
+log_dir: runs
+save_every: 1000
+eval_every: 1000
+eval_episodes: 10
+
+max_steps: 2000
+illegal_penalty: -1.0
+
+seed: 42
+device: auto
+run_name: quick

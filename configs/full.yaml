@@ -1,0 +1,28 @@
+# full 配置：追求效果，目标 max-tile 中位数 >= 512（S2）。
+# 在 Apple M2 上以 CPU/MPS 训练，预期 30 分钟 ~ 2 小时收敛取向。
+total_steps: 300000
+learning_starts: 5000
+train_freq: 4
+target_update_interval: 2000
+
+lr: 0.0005
+gamma: 0.99
+batch_size: 128
+buffer_size: 100000
+hidden_sizes: [256, 256]
+
+eps_start: 1.0
+eps_end: 0.05
+eps_decay_steps: 100000
+
+log_dir: runs
+save_every: 20000
+eval_every: 20000
+eval_episodes: 50
+
+max_steps: 5000
+illegal_penalty: -1.0
+
+seed: 42
+device: auto
+run_name: full

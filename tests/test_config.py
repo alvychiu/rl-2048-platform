@@ -1,0 +1,62 @@
+"""T-08 配置加载与校验测试。关联 US-04 / TC-015~TC-018。"""
+
+import os
+import stat
+
+import pytest
+
+from src.train.config import Config
+
+
+def test_tc015_load_valid_quick_yaml():
+    cfg = Config.from_yaml("configs/quick.yaml")
+    assert cfg.total_steps == 3000
+    assert cfg.batch_size == 64
+    assert cfg.hidden_sizes == [128, 128]
+    assert cfg.device == "auto"
+
+
+def test_load_full_yaml():
+    cfg = Config.from_yaml("configs/full.yaml")
+    assert cfg.total_steps == 300000
+    assert cfg.run_name == "full"
+
+
+def test_tc016_missing_required_field(tmp_path):
+    p = tmp_path / "bad.yaml"
+    p.write_text("lr: 0.001\n", encoding="utf-8")  # 缺 total_steps
+    with pytest.raises(ValueError, match="total_steps"):
+        Config.from_yaml(str(p))
+
+
+def test_tc017_type_error_field():
+    with pytest.raises(TypeError, match="lr"):
+        Config.from_dict({"total_steps": 1000, "lr": "abc"})
+
+
+def test_unknown_key_rejected():
+    with pytest.raises(ValueError, match="unknown"):
+        Config.from_dict({"total_steps": 1000, "foo": 1})
+
+
+def test_value_range_validation():
+    with pytest.raises(ValueError):
+        Config.from_dict({"total_steps": 1000, "gamma": 2.0})
+
+
+def test_tc018_no_read_permission(tmp_path):
+    p = tmp_path / "secret.yaml"
+    p.write_text("total_steps: 1000\n", encoding="utf-8")
+    os.chmod(p, 0)  # 移除所有权限
+    try:
+        if os.access(str(p), os.R_OK):
+            pytest.skip("running as root; permission not enforced")
+        with pytest.raises(PermissionError):
+            Config.from_yaml(str(p))
+    finally:
+        os.chmod(p, stat.S_IRUSR | stat.S_IWUSR)
+
+
+def test_int_not_accept_bool():
+    with pytest.raises(TypeError):
+        Config.from_dict({"total_steps": True})

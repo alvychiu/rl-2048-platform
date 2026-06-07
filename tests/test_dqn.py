@@ -1,0 +1,76 @@
+"""T-11 DQN 智能体测试。关联 US-05 / TC-022, TC-023。"""
+
+import numpy as np
+
+from src.agents.dqn import DQNAgent
+from src.train.replay_buffer import ReplayBuffer
+
+
+def make_agent(**kw):
+    defaults = dict(
+        obs_shape=(4, 4),
+        hidden_sizes=(32, 32),
+        eps_decay_steps=100,
+        target_update_interval=5,
+        device="cpu",
+    )
+    defaults.update(kw)
+    return DQNAgent(**defaults)
+
+
+def test_act_returns_valid_action():
+    agent = make_agent()
+    rng = np.random.default_rng(0)
+    obs = np.zeros((4, 4), dtype=np.float32)
+    a = agent.act(obs, step=0, rng=rng)
+    assert a in {0, 1, 2, 3}
+
+
+def test_epsilon_decays():
+    agent = make_agent(eps_start=1.0, eps_end=0.1, eps_decay_steps=100)
+    assert agent.epsilon(0) == 1.0
+    assert agent.epsilon(100) == 0.1
+    assert 0.1 < agent.epsilon(50) < 1.0
+
+
+def test_learn_runs_and_returns_loss():
+    agent = make_agent()
+    buf = ReplayBuffer(capacity=200, obs_shape=(4, 4))
+    rng = np.random.default_rng(1)
+    for i in range(64):
+        buf.push(
+            rng.random((4, 4)).astype(np.float32),
+            i % 4,
+            float(rng.random()),
+            rng.random((4, 4)).astype(np.float32),
+            bool(i % 7 == 0),
+        )
+    loss = agent.learn(buf.sample(32, rng=rng))
+    assert isinstance(loss, float)
+    assert loss >= 0.0
+
+
+def test_target_sync_changes_params():
+    agent = make_agent(target_update_interval=1)
+    buf = ReplayBuffer(capacity=200, obs_shape=(4, 4))
+    rng = np.random.default_rng(2)
+    for i in range(40):
+        buf.push(
+            rng.random((4, 4)).astype(np.float32),
+            i % 4,
+            1.0,
+            rng.random((4, 4)).astype(np.float32),
+            False,
+        )
+    # 学习一步后 target 应与 q_net 同步
+    agent.learn(buf.sample(16, rng=rng))
+    for p, t in zip(agent.q_net.parameters(), agent.target_net.parameters()):
+        assert np.allclose(p.detach().cpu().numpy(), t.detach().cpu().numpy())
+
+
+def test_state_dict_roundtrip():
+    a1 = make_agent()
+    a2 = make_agent()
+    a2.load_state_dict(a1.state_dict())
+    for p, q in zip(a1.q_net.parameters(), a2.q_net.parameters()):
+        assert np.allclose(p.detach().cpu().numpy(), q.detach().cpu().numpy())

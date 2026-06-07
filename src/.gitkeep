@@ -1,0 +1,7 @@
+# src/ — 源代码目录
+
+这是 AI Driven Delivery System 中唯一允许写入代码的目录。
+
+- G3-Development Skill 产出的所有代码必须写入此处。
+- Skill 不得向 src/ 以外目录写入代码。
+- 实际开发开始后可删除本占位文件。
