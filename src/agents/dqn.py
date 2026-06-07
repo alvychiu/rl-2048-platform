@@ -1,22 +1,47 @@
-"""DQN 智能体：ε-greedy 选动作 + TD 目标 + 目标网络周期同步。
+"""DQN 智能体：ε-greedy + TD 目标 + 目标网络周期同步。
 
-设计：
-- 主网络 q_net 与目标网络 target_net；target 周期性硬拷贝主网络参数。
-- act：以线性衰减的 ε 做探索，否则取 argmax Q。
-- learn：从回放采样，计算 TD loss = MSE(Q(s,a), r + γ·maxQ_target(s')·(1-done))。
-- device 由 utils.resolve_device 解析（Apple M2 用 cpu/mps，无 CUDA）。
+v6 扩展：可选 Double DQN + Dueling CNN。
 """
 
 from __future__ import annotations
 
 import copy
+from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
 
-from src.agents.network import QNetwork
+from src.agents.network import build_q_network
 from src.utils.seeding import resolve_device
+
+
+def agent_kwargs_from_meta(meta: dict[str, Any]) -> dict[str, Any]:
+    """从检查点 meta 还原 Agent 构造参数。"""
+    return {
+        "obs_shape": (4, 4),
+        "hidden_sizes": tuple(meta.get("hidden_sizes", (256, 256))),
+        "network_type": meta.get("network_type", "mlp"),
+        "cnn_channels": tuple(meta.get("cnn_channels", (32, 64))),
+        "cnn_fc_size": int(meta.get("cnn_fc_size", 128)),
+        "use_dueling": bool(meta.get("use_dueling", False)),
+        "use_double_dqn": bool(meta.get("use_double_dqn", False)),
+    }
+
+
+def checkpoint_meta(agent: "DQNAgent", extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    """生成写入检查点的网络 meta。"""
+    meta = {
+        "hidden_sizes": list(agent.hidden_sizes),
+        "network_type": agent.network_type,
+        "cnn_channels": list(agent.cnn_channels),
+        "cnn_fc_size": agent.cnn_fc_size,
+        "use_dueling": agent.use_dueling,
+        "use_double_dqn": agent.use_double_dqn,
+    }
+    if extra:
+        meta.update(extra)
+    return meta
 
 
 class DQNAgent:
@@ -25,6 +50,11 @@ class DQNAgent:
         obs_shape: tuple[int, ...] = (4, 4),
         num_actions: int = 4,
         hidden_sizes=(256, 256),
+        network_type: str = "mlp",
+        cnn_channels=(32, 64),
+        cnn_fc_size: int = 128,
+        use_dueling: bool = False,
+        use_double_dqn: bool = False,
         lr: float = 1e-3,
         gamma: float = 0.99,
         eps_start: float = 1.0,
@@ -42,9 +72,22 @@ class DQNAgent:
         self.eps_decay_steps = int(eps_decay_steps)
         self.target_update_interval = int(target_update_interval)
         self.grad_clip_max_norm = float(grad_clip_max_norm)
+        self.hidden_sizes = tuple(hidden_sizes)
+        self.network_type = str(network_type)
+        self.cnn_channels = tuple(cnn_channels)
+        self.cnn_fc_size = int(cnn_fc_size)
+        self.use_dueling = bool(use_dueling)
+        self.use_double_dqn = bool(use_double_dqn)
 
-        input_dim = int(np.prod(obs_shape))
-        self.q_net = QNetwork(input_dim, hidden_sizes, num_actions).to(self.device)
+        self.q_net = build_q_network(
+            network_type=self.network_type,
+            obs_shape=obs_shape,
+            hidden_sizes=self.hidden_sizes,
+            conv_channels=self.cnn_channels,
+            cnn_fc_size=self.cnn_fc_size,
+            num_actions=num_actions,
+            use_dueling=self.use_dueling,
+        ).to(self.device)
         self.target_net = copy.deepcopy(self.q_net).to(self.device)
         self.target_net.eval()
 
@@ -53,8 +96,15 @@ class DQNAgent:
 
         self._learn_steps = 0
 
+    @classmethod
+    def from_checkpoint_meta(
+        cls, meta: dict[str, Any], device: str = "cpu", **overrides
+    ) -> "DQNAgent":
+        kw = agent_kwargs_from_meta(meta)
+        kw.update(overrides)
+        return cls(device=device, **kw)
+
     def epsilon(self, step: int) -> float:
-        """线性衰减的探索率。"""
         if step >= self.eps_decay_steps:
             return self.eps_end
         frac = step / max(1, self.eps_decay_steps)
@@ -64,7 +114,6 @@ class DQNAgent:
         if legal_mask is None:
             return list(range(self.num_actions))
         idx = [i for i, ok in enumerate(np.asarray(legal_mask).tolist()) if ok]
-        # 无合法动作（终局）时退回全集，避免空选择崩溃。
         return idx if idx else list(range(self.num_actions))
 
     @torch.no_grad()
@@ -75,7 +124,6 @@ class DQNAgent:
         rng: np.random.Generator,
         legal_mask=None,
     ) -> int:
-        """ε-greedy 选动作；提供 legal_mask 时仅在合法动作中选择（RV-1）。"""
         legal = self._legal_indices(legal_mask)
         eps = self.epsilon(step)
         if rng.random() < eps:
@@ -84,21 +132,25 @@ class DQNAgent:
 
     @torch.no_grad()
     def act_greedy(self, obs: np.ndarray, legal_mask=None) -> int:
-        """纯贪心（评估用）；提供 legal_mask 时仅在合法动作中取 argmax（RV-1）。"""
         return self._greedy_among(obs, self._legal_indices(legal_mask))
 
     @torch.no_grad()
     def _greedy_among(self, obs: np.ndarray, legal: list[int]) -> int:
         obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
         q = self.q_net(obs_t).squeeze(0)
-        # 把非法动作的 Q 置为 -inf，再取 argmax
         mask = torch.full_like(q, float("-inf"))
         legal_t = torch.tensor(legal, dtype=torch.int64, device=self.device)
         mask[legal_t] = q[legal_t]
         return int(torch.argmax(mask).item())
 
+    def _masked_max_q(
+        self, q_all: torch.Tensor, legal_t: torch.Tensor
+    ) -> torch.Tensor:
+        masked = q_all.masked_fill(~legal_t, float("-inf"))
+        max_q = masked.max(dim=1).values
+        return torch.where(torch.isinf(max_q), torch.zeros_like(max_q), max_q)
+
     def learn(self, batch) -> float:
-        """一次梯度更新，返回 loss 标量。"""
         obs, actions, rewards, next_obs, dones, next_legal_masks = batch
         obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device)
         next_t = torch.as_tensor(next_obs, dtype=torch.float32, device=self.device)
@@ -108,15 +160,18 @@ class DQNAgent:
 
         q_values = self.q_net(obs_t).gather(1, act_t.unsqueeze(1)).squeeze(1)
         with torch.no_grad():
-            next_q_all = self.target_net(next_t)
             legal_t = torch.as_tensor(
                 next_legal_masks, dtype=torch.bool, device=self.device
             )
-            next_q_all = next_q_all.masked_fill(~legal_t, float("-inf"))
-            next_q = next_q_all.max(dim=1).values
-            next_q = torch.where(
-                torch.isinf(next_q), torch.zeros_like(next_q), next_q
-            )
+            if self.use_double_dqn:
+                online_next = self.q_net(next_t).masked_fill(~legal_t, float("-inf"))
+                best_act = online_next.argmax(dim=1, keepdim=True)
+                target_next = self.target_net(next_t).gather(1, best_act).squeeze(1)
+                next_q = torch.where(
+                    torch.isinf(target_next), torch.zeros_like(target_next), target_next
+                )
+            else:
+                next_q = self._masked_max_q(self.target_net(next_t), legal_t)
             target = rew_t + self.gamma * next_q * (1.0 - done_t)
 
         loss = self.loss_fn(q_values, target)

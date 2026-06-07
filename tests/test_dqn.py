@@ -110,6 +110,29 @@ def test_learn_masks_illegal_next_actions():
     assert loss >= 0.0
 
 
+def test_double_dqn_cnn_learn_runs():
+    agent = make_agent(
+        network_type="cnn",
+        use_dueling=True,
+        use_double_dqn=True,
+        cnn_channels=(16, 32),
+        cnn_fc_size=64,
+    )
+    buf = ReplayBuffer(capacity=200, obs_shape=(4, 4))
+    rng = np.random.default_rng(4)
+    for i in range(64):
+        buf.push(
+            rng.random((4, 4)).astype(np.float32),
+            i % 4,
+            float(rng.random()),
+            rng.random((4, 4)).astype(np.float32),
+            bool(i % 7 == 0),
+        )
+    loss = agent.learn(buf.sample(32, rng=rng))
+    assert isinstance(loss, float)
+    assert loss >= 0.0
+
+
 def test_state_dict_roundtrip():
     a1 = make_agent()
     a2 = make_agent()

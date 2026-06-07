@@ -52,6 +52,11 @@ class Config:
     batch_size: int = 128
     buffer_size: int = 50000
     hidden_sizes: list[int] = field(default_factory=lambda: [256, 256])
+    network_type: str = "mlp"
+    cnn_channels: list[int] = field(default_factory=lambda: [32, 64])
+    cnn_fc_size: int = 128
+    use_dueling: bool = False
+    use_double_dqn: bool = False
     grad_clip_max_norm: float = 0.0
 
     # ε-greedy 探索
@@ -77,17 +82,25 @@ class Config:
         for f in fields(self):
             value = getattr(self, f.name)
             expected = f.type
-            if f.name == "hidden_sizes":
+            if f.name in ("hidden_sizes", "cnn_channels"):
                 if not isinstance(value, list) or not all(
                     isinstance(x, int) for x in value
                 ):
-                    raise TypeError("config field 'hidden_sizes' must be list[int]")
+                    raise TypeError(f"config field '{f.name}' must be list[int]")
                 continue
             if f.name in (
+                "use_dueling",
+                "use_double_dqn",
                 "reward_structure_corner_log_scale",
             ):
                 if not isinstance(value, bool):
                     raise TypeError(f"config field '{f.name}' must be bool")
+                continue
+            if f.name == "network_type":
+                if value not in ("mlp", "cnn"):
+                    raise ValueError(
+                        f"network_type must be 'mlp' or 'cnn', got {value!r}"
+                    )
                 continue
             if f.name == "reward_milestones":
                 if not isinstance(value, dict):

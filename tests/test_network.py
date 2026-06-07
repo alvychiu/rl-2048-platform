@@ -2,7 +2,12 @@
 
 import torch
 
-from src.agents.network import QNetwork
+from src.agents.network import (
+    CNNQNetwork,
+    DuelingCNNQNetwork,
+    QNetwork,
+    build_q_network,
+)
 
 
 def test_forward_output_shape_flat():
@@ -29,3 +34,23 @@ def test_custom_hidden_sizes():
     net = QNetwork(hidden_sizes=(128, 128, 64))
     x = torch.randn(3, 16)
     assert net(x).shape == (3, 4)
+
+
+def test_cnn_forward_board_shape():
+    net = CNNQNetwork(conv_channels=(32, 64), fc_size=128)
+    x = torch.zeros(4, 4, 4)
+    assert net(x).shape == (4, 4)
+
+
+def test_dueling_cnn_forward():
+    net = DuelingCNNQNetwork(conv_channels=(32, 64), fc_size=128)
+    x = torch.randn(2, 4, 4)
+    assert net(x).shape == (2, 4)
+
+
+def test_build_q_network_cnn_dueling():
+    net = build_q_network(
+        network_type="cnn", use_dueling=True, conv_channels=(16, 32)
+    )
+    out = net(torch.randn(1, 4, 4))
+    assert out.shape == (1, 4)

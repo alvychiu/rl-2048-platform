@@ -16,7 +16,7 @@ import time
 
 import numpy as np
 
-from src.agents.dqn import DQNAgent
+from src.agents.dqn import DQNAgent, checkpoint_meta
 from src.env.game_2048_env import Game2048Env
 from src.train.config import Config
 from src.train.replay_buffer import ReplayBuffer
@@ -95,6 +95,11 @@ def train(cfg: Config) -> dict:
         obs_shape=(4, 4),
         num_actions=4,
         hidden_sizes=tuple(cfg.hidden_sizes),
+        network_type=cfg.network_type,
+        cnn_channels=tuple(cfg.cnn_channels),
+        cnn_fc_size=cfg.cnn_fc_size,
+        use_dueling=cfg.use_dueling,
+        use_double_dqn=cfg.use_double_dqn,
         lr=cfg.lr,
         gamma=cfg.gamma,
         eps_start=cfg.eps_start,
@@ -166,7 +171,7 @@ def train(cfg: Config) -> dict:
             save_checkpoint(
                 path,
                 agent.state_dict(),
-                meta={"step": step, "hidden_sizes": list(cfg.hidden_sizes)},
+                meta=checkpoint_meta(agent, {"step": step}),
             )
             logger.log_text(f"[ckpt] saved {path}")
 
@@ -186,11 +191,7 @@ def train(cfg: Config) -> dict:
                 save_checkpoint(
                     best_path,
                     agent.state_dict(),
-                    meta={
-                        "step": step,
-                        "hidden_sizes": list(cfg.hidden_sizes),
-                        **stats,
-                    },
+                    meta=checkpoint_meta(agent, {"step": step, **stats}),
                 )
                 logger.log_text(
                     f"[best] step={step} median={best_median} -> {best_path}"

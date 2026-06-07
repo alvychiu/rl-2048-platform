@@ -24,6 +24,18 @@ def test_load_full_yaml():
     assert cfg.hidden_sizes == [256, 256, 128]
 
 
+def test_load_full_v6_yaml():
+    cfg = Config.from_yaml("configs/full_v6.yaml")
+    assert cfg.network_type == "cnn"
+    assert cfg.use_dueling is True
+    assert cfg.use_double_dqn is True
+    assert cfg.eval_episodes == 200
+    assert cfg.reward_snake_coef == 4.0
+    assert cfg.reward_structure_coef == 0.0
+    assert cfg.reward_high_tile_coef == 0.0
+    assert cfg.run_name == "full_v6"
+
+
 def test_load_full_v5_yaml():
     cfg = Config.from_yaml("configs/full_v5.yaml")
     assert cfg.reward_snake_coef == 4.0

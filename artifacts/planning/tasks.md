@@ -53,7 +53,7 @@ tests/              # 测试
 | T-17 | 一键启动(Makefile/脚本: train/eval/board) | US-09 | T-14,T-16 | S | Low | ✅ DONE |
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
-| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | 🔄 DOING(v4调参) |
+| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | 🔄 DOING(v6算法升级) |
 | T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20
@@ -213,7 +213,9 @@ tests/              # 测试
   - `board.snake_gradient_score`：固定左下角，蛇形几何递减权重势能（主导塑形项）
   - 方向纪律：`discouraged_action=0(UP)` + `discouraged_action_penalty`，抑制误触向上打乱布局
   - 配置 `full_v5.yaml`（800k）/ `full_v5_smoke.yaml`（50k）
-  - 烟雾 `runs/2026-06-07_16-57-24_full_v5_smoke`：50k 步，192s，单局频繁到 256；启动 full_v5 完整训练。
+  - 烟雾 `runs/2026-06-07_16-57-24_full_v5_smoke`：50k 步，192s，单局频繁到 256。
+  - **full_v5 训练结果** `runs/2026-06-07_17-00-59_full_v5`：800k 步，2361s；best_median=128；正式评估 median=128, max=512；**S2 FAIL**。
+  - **v6 算法升级**（2026-06-07，报告 8.2）：Double Dueling CNN-DQN + 简化奖励（仅蛇形+里程碑）+ eval_episodes=200；配置 `full_v6.yaml`；训练进行中。
 
 ### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
 - **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium

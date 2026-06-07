@@ -14,7 +14,7 @@ import argparse
 
 import numpy as np
 
-from src.agents.dqn import DQNAgent
+from src.agents.dqn import DQNAgent, agent_kwargs_from_meta
 from src.env.game_2048_env import Game2048Env
 from src.utils.checkpoint import load_checkpoint, load_into_agent
 
@@ -52,12 +52,10 @@ def evaluate(
 ) -> dict:
     # RV-3：优先从检查点 meta 读取网络结构，避免手填 --hidden 不一致。
     meta = load_checkpoint(ckpt, map_location="cpu").get("meta", {})
-    if hidden_sizes is None:
-        hidden_sizes = meta.get("hidden_sizes", (256, 256))
+    if hidden_sizes is not None:
+        meta = {**meta, "hidden_sizes": list(hidden_sizes)}
 
-    agent = DQNAgent(
-        obs_shape=(4, 4), hidden_sizes=tuple(hidden_sizes), device=device
-    )
+    agent = DQNAgent(**agent_kwargs_from_meta(meta), device=device)
     load_into_agent(agent, ckpt, map_location="cpu")
 
     trained = _run_episodes(

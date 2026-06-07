@@ -24,6 +24,7 @@ help:
 	@echo "make train CONFIG=configs/full_v4.yaml         # v4完整(800k)"
 	@echo "make train CONFIG=configs/full_v5_smoke.yaml   # v5蛇形烟雾(50k)"
 	@echo "make train CONFIG=configs/full_v5.yaml         # v5蛇形完整(800k)"
+	@echo "make train CONFIG=configs/full_v6.yaml         # v6 DD-CNN-DQN(800k)"
 	@echo "make board                启动 TensorBoard (localhost:$(PORT))"
 	@echo "make eval CKPT=runs/<id>/best.pt"
 	@echo "make play                 启动 2048 GUI（手动游玩）"

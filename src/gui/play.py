@@ -17,7 +17,7 @@ import time
 import numpy as np
 import pygame
 
-from src.agents.dqn import DQNAgent
+from src.agents.dqn import DQNAgent, agent_kwargs_from_meta
 from src.env import board as B
 from src.env.game_2048_env import Game2048Env
 from src.gui.renderer import draw_board, draw_overlay, key_to_action, window_size
@@ -122,8 +122,7 @@ def main() -> None:
 
     if args.ckpt:
         meta = load_checkpoint(args.ckpt, map_location="cpu").get("meta", {})
-        hidden = tuple(meta.get("hidden_sizes", (256, 256)))
-        agent = DQNAgent(obs_shape=(4, 4), hidden_sizes=hidden, device=args.device)
+        agent = DQNAgent(**agent_kwargs_from_meta(meta), device=args.device)
         load_into_agent(agent, args.ckpt, map_location="cpu")
         env.reset(seed=args.seed)
         run_ai_demo(env, agent, fps=min(args.fps, 12))

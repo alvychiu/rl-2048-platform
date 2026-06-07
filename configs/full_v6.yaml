@@ -1,0 +1,59 @@
+# full_v6：按报告 8.2 建议 — Double Dueling CNN-DQN + 简化奖励（蛇形+里程碑）
+#
+# 1. 算法：Double DQN（减 Q 过估计）+ Dueling 头（V/A 分解）
+# 2. 网络：CNN 编码 4×4 棋盘（保留空间结构）
+# 3. 奖励消融：仅 merge缩放 + 蛇形势能 + 里程碑（去掉结构/高tile/方向纪律等）
+# 4. 评估：eval_episodes=200 提升 median 稳定性
+total_steps: 800000
+learning_starts: 8000
+train_freq: 4
+target_update_interval: 8000
+
+lr: 0.00005
+gamma: 0.998
+batch_size: 256
+buffer_size: 300000
+grad_clip_max_norm: 5.0
+
+# v6 算法与网络
+network_type: cnn
+cnn_channels: [32, 64]
+cnn_fc_size: 128
+use_dueling: true
+use_double_dqn: true
+hidden_sizes: [256, 256]
+
+eps_start: 1.0
+eps_end: 0.01
+eps_decay_steps: 160000
+
+log_dir: runs
+save_every: 50000
+eval_every: 50000
+eval_episodes: 200
+
+max_steps: 15000
+illegal_penalty: -0.1
+
+# 简化奖励：仅三项
+merge_reward_scale: 0.03
+reward_empty_coef: 0.0
+reward_new_max_bonus: 0.0
+reward_milestones:
+  128: 3
+  256: 15
+  512: 60
+  1024: 150
+
+reward_high_tile_coef: 0.0
+reward_structure_coef: 0.0
+reward_snake_coef: 4.0
+reward_snake_corner: bottom-left
+reward_snake_ratio: 0.7
+
+discouraged_action: -1
+discouraged_action_penalty: 0.0
+
+seed: 42
+device: auto
+run_name: full_v6
