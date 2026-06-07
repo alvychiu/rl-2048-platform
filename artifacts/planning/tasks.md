@@ -54,6 +54,7 @@ tests/              # 测试
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
 | T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | TODO |
+| T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20
 
@@ -190,6 +191,14 @@ tests/              # 测试
 - **技术方案**：调 reward 设计/网络/ε 衰减/学习率；quick 验证管线，full 追求 max-tile 中位数≥512；记录基线对比。
 - **风险点**：收敛不确定性最高；预留多轮调参，必要时调整 reward 塑形(A-7)。
 - **DoD**：S2 达标（max-tile 中位数≥512）或给出充分的趋势证据 + 复盘。关联 TC-048。
+
+### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
+- **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium
+- **技术方案**：`src/gui/` 用 pygame 渲染棋盘；`key_to_action` 映射方向键/WASD；`make play` 手动模式；`make play CKPT=...` 加载检查点 AI 演示（动作屏蔽）；经典配色无复杂动画。
+- **DoD**：TC-052~057；`make play` 可启动；README 已更新。
+- **状态**：✅ DONE（2026-06-07）
+- **变更文件**：src/gui/{renderer.py,play.py}, requirements.txt(pygame), Makefile(play), tests/test_gui.py, README.md
+- **验证结果**：74 passed；`make play` / `make play CKPT=...` 入口就绪。
 
 ---
 

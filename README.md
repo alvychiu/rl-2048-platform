@@ -37,9 +37,15 @@ make eval CKPT=runs/<your-run-id>/best.pt HIDDEN="128 128"
 ```
 > `HIDDEN` 必须与训练配置的 `hidden_sizes` 一致（quick=128 128，full=256 256）。
 
-### 5. 运行测试
+### 5. 2048 GUI（图形界面）
 ```bash
-make test           # pytest，约 60+ 用例
+make play                              # 手动游玩（方向键 / WASD，R 重开，ESC 退出）
+make play CKPT=runs/<id>/best.pt       # AI 自动演示（自动读取网络结构）
+```
+
+### 6. 运行测试
+```bash
+make test           # pytest，约 70+ 用例
 ```
 
 ### 追求效果（达标 max-tile 中位数 ≥ 512）
@@ -56,6 +62,7 @@ src/
 ├── agents/   DQN 网络 (network.py) + 智能体 (dqn.py)
 ├── train/    配置 (config.py) + 回放 (replay_buffer.py) + 训练主循环 (train.py)
 ├── eval/     评估 + 随机基线 (evaluate.py)
+├── gui/      pygame 图形界面 (renderer.py, play.py)
 └── utils/    seed/device (seeding.py) + 记录器 (logger.py) + 检查点 (checkpoint.py)
 configs/      quick.yaml / full.yaml
 tests/        单测 + 训练冒烟测试
@@ -96,6 +103,7 @@ docker run --rm -v "$PWD/runs:/app/runs" rl-2048   # 容器内用 CPU 跑 quick 
 - [Gymnasium](https://github.com/Farama-Foundation/Gymnasium)（环境接口规范，标准 RL API）
 - [PyTorch](https://github.com/pytorch/pytorch)（深度学习框架，DQN 网络与训练）
 - [TensorBoard](https://github.com/tensorflow/tensorboard)（训练可视化）
+- [pygame](https://www.pygame.org/)（2048 GUI 图形界面）
 - NumPy / PyYAML / pytest（数值计算 / 配置解析 / 测试）
 
 2048 游戏规则参考公开通用规则（4×4 棋盘，相同方块合并，2 占 90% / 4 占 10%）。
