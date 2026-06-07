@@ -5,7 +5,7 @@ import pytest
 pygame = pytest.importorskip("pygame")
 
 from src.env import board as B
-from src.gui.renderer import key_to_action, tile_colors, window_size
+from src.gui.renderer import get_ui_font, key_to_action, tile_colors, window_size
 
 
 def test_key_to_action_arrows_and_wasd():
@@ -31,6 +31,13 @@ def test_tile_colors_known_and_large():
 def test_window_size_positive():
     w, h = window_size()
     assert w > 400 and h > 400
+
+
+def test_ui_font_renders_chinese():
+    pygame.init()
+    font = get_ui_font(18)
+    surf = font.render("AI 自动演示", True, (0, 0, 0))
+    assert surf.get_width() > 20
 
 
 def test_play_module_parses_args():

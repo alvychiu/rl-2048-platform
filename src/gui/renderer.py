@@ -36,6 +36,48 @@ GRID_SIZE = B.SIZE
 PADDING = 20
 HEADER_H = 100
 
+# macOS / 跨平台：优先选用支持中文的系统字体，避免 pygame 默认 arial 显示 □□□□
+_CJK_FONT_CANDIDATES = (
+    "PingFang SC",
+    "PingFangSC-Regular",
+    "STHeiti Light",
+    "STHeiti",
+    "Hiragino Sans GB",
+    "Arial Unicode MS",
+    "Microsoft YaHei",
+    "Noto Sans CJK SC",
+    "WenQuanYi Micro Hei",
+)
+
+_font_cache: dict[tuple[int, bool], pygame.font.Font] = {}
+
+
+def _font_supports_cjk(font: pygame.font.Font) -> bool:
+    """粗略检测字体是否能渲染中文（非空、非全空白）。"""
+    try:
+        surf = font.render("中文", True, (0, 0, 0))
+        return surf.get_width() > 10
+    except Exception:
+        return False
+
+
+def get_ui_font(size: int, bold: bool = False) -> pygame.font.Font:
+    """获取可显示中文的 UI 字体（带缓存）。"""
+    key = (size, bold)
+    if key in _font_cache:
+        return _font_cache[key]
+    for name in _CJK_FONT_CANDIDATES:
+        try:
+            f = pygame.font.SysFont(name, size, bold=bold)
+            if _font_supports_cjk(f):
+                _font_cache[key] = f
+                return f
+        except Exception:
+            continue
+    f = pygame.font.SysFont(None, size, bold=bold)
+    _font_cache[key] = f
+    return f
+
 
 def window_size() -> tuple[int, int]:
     w = PADDING * 2 + GRID_SIZE * CELL_SIZE + (GRID_SIZE - 1) * CELL_GAP
@@ -73,9 +115,10 @@ def draw_board(
     subtitle: str = "方向键/WASD 移动 | R 重开 | ESC 退出",
 ) -> None:
     surface.fill(WINDOW_BG)
-    font_title = pygame.font.SysFont("arial", 42, bold=True)
-    font_small = pygame.font.SysFont("arial", 18)
-    font_score = pygame.font.SysFont("arial", 22, bold=True)
+    font_title = get_ui_font(42, bold=True)
+    font_small = get_ui_font(18)
+    font_score = get_ui_font(22, bold=True)
+    # 方块数字用西文字体即可
     font_cell = pygame.font.SysFont("arial", 36, bold=True)
     font_cell_sm = pygame.font.SysFont("arial", 28, bold=True)
 
@@ -120,6 +163,6 @@ def draw_overlay(surface: pygame.Surface, message: str) -> None:
     overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     overlay.fill((255, 255, 255, 160))
     surface.blit(overlay, (0, 0))
-    font = pygame.font.SysFont("arial", 40, bold=True)
+    font = get_ui_font(40, bold=True)
     txt = font.render(message, True, (60, 58, 50))
     surface.blit(txt, txt.get_rect(center=surface.get_rect().center))

@@ -59,7 +59,7 @@ def run_manual(env: Game2048Env, fps: int = 30) -> None:
 
         draw_board(screen, info["board"], info["score"], subtitle="手动模式 | R 重开 | ESC 退出")
         if game_over:
-            draw_overlay(screen, "Game Over!")
+            draw_overlay(screen, "游戏结束！")
         pygame.display.flip()
         clock.tick(fps)
 
