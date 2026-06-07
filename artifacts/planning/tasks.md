@@ -53,7 +53,7 @@ tests/              # 测试
 | T-17 | 一键启动(Makefile/脚本: train/eval/board) | US-09 | T-14,T-16 | S | Low | ✅ DONE |
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
-| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | DOING |
+| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | ⚠️ DONE(S2未达标) |
 | T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20
@@ -191,6 +191,10 @@ tests/              # 测试
 - **技术方案**：调 reward 设计/网络/ε 衰减/学习率；quick 验证管线，full 追求 max-tile 中位数≥512；记录基线对比。
 - **风险点**：收敛不确定性最高；预留多轮调参，必要时调整 reward 塑形(A-7)。
 - **DoD**：S2 达标（max-tile 中位数≥512）或给出充分的趋势证据 + 复盘。关联 TC-048。
+- **状态**：⚠️ DONE-训练完成/S2未达标（2026-06-07）
+- **训练结果**：`runs/2026-06-07_13-57-22_full`，250k 步，MPS，耗时 502s，1827 episodes；训练中单局 max_tile 达 512，eval best_median=256。
+- **正式评估(100局)**：trained median=128, max=512, score_mean=2200；random median=128；**S2 FAIL（<512）**。
+- **复盘**：reward 塑形 + 250k 步有学习信号（超随机 score、偶发 512），但评估中位数不稳定未达 S2；后续可加长训练/调 reward/增大网络。
 
 ### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
 - **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium
