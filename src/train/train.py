@@ -30,8 +30,14 @@ def evaluate_agent(agent: DQNAgent, cfg: Config, episodes: int, seed: int) -> di
     env = Game2048Env(
         max_steps=cfg.max_steps,
         illegal_penalty=cfg.illegal_penalty,
+        merge_reward_scale=cfg.merge_reward_scale,
         reward_empty_coef=cfg.reward_empty_coef,
         reward_new_max_bonus=cfg.reward_new_max_bonus,
+        reward_milestones=cfg.reward_milestones,
+        reward_structure_coef=cfg.reward_structure_coef,
+        reward_structure_corner=cfg.reward_structure_corner,
+        reward_structure_monotonicity=cfg.reward_structure_monotonicity,
+        reward_structure_smoothness=cfg.reward_structure_smoothness,
     )
     max_tiles, scores = [], []
     for i in range(episodes):
@@ -58,8 +64,14 @@ def train(cfg: Config) -> dict:
     env = Game2048Env(
         max_steps=cfg.max_steps,
         illegal_penalty=cfg.illegal_penalty,
+        merge_reward_scale=cfg.merge_reward_scale,
         reward_empty_coef=cfg.reward_empty_coef,
         reward_new_max_bonus=cfg.reward_new_max_bonus,
+        reward_milestones=cfg.reward_milestones,
+        reward_structure_coef=cfg.reward_structure_coef,
+        reward_structure_corner=cfg.reward_structure_corner,
+        reward_structure_monotonicity=cfg.reward_structure_monotonicity,
+        reward_structure_smoothness=cfg.reward_structure_smoothness,
     )
     agent = DQNAgent(
         obs_shape=(4, 4),
@@ -89,7 +101,14 @@ def train(cfg: Config) -> dict:
         action = agent.act(obs, step, rng, legal_mask=info["legal_action_mask"])
         next_obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
-        buffer.push(obs, action, reward, next_obs, terminated)
+        buffer.push(
+            obs,
+            action,
+            reward,
+            next_obs,
+            terminated,
+            info["legal_action_mask"],
+        )
         obs = next_obs
         ep_reward += reward
         ep_len += 1

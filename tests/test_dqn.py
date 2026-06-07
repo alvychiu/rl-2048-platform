@@ -96,6 +96,20 @@ def test_target_sync_changes_params():
         assert np.allclose(p.detach().cpu().numpy(), t.detach().cpu().numpy())
 
 
+def test_learn_masks_illegal_next_actions():
+    """TD 目标仅在 next 合法动作上取 max Q。"""
+    agent = make_agent()
+    buf = ReplayBuffer(capacity=200, obs_shape=(4, 4))
+    rng = np.random.default_rng(3)
+    obs = np.zeros((4, 4), dtype=np.float32)
+    mask = np.array([False, True, False, False])
+    for _ in range(32):
+        buf.push(obs, 1, 1.0, obs, False, next_legal_mask=mask)
+    loss = agent.learn(buf.sample(16, rng=rng))
+    assert isinstance(loss, float)
+    assert loss >= 0.0
+
+
 def test_state_dict_roundtrip():
     a1 = make_agent()
     a2 = make_agent()

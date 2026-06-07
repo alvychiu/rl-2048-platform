@@ -24,6 +24,22 @@ def test_load_full_yaml():
     assert cfg.hidden_sizes == [256, 256, 128]
 
 
+def test_load_full_v3_smoke_yaml():
+    cfg = Config.from_yaml("configs/full_v3_smoke.yaml")
+    assert cfg.reward_structure_coef == 1.0
+    assert cfg.reward_structure_corner == 2.0
+    assert cfg.run_name == "full_v3_smoke"
+
+
+def test_load_full_v2_smoke_yaml():
+    cfg = Config.from_yaml("configs/full_v2_smoke.yaml")
+    assert cfg.total_steps == 50000
+    assert cfg.merge_reward_scale == 0.05
+    assert cfg.reward_milestones[1024] == 80.0
+    assert cfg.hidden_sizes == [512, 512, 256]
+    assert cfg.gamma == 0.995
+
+
 def test_tc016_missing_required_field(tmp_path):
     p = tmp_path / "bad.yaml"
     p.write_text("lr: 0.001\n", encoding="utf-8")  # 缺 total_steps

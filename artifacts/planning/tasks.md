@@ -53,7 +53,7 @@ tests/              # 测试
 | T-17 | 一键启动(Makefile/脚本: train/eval/board) | US-09 | T-14,T-16 | S | Low | ✅ DONE |
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
-| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | ⚠️ DONE(S2未达标) |
+| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | 🔄 DOING(v3结构奖励) |
 | T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20
@@ -191,10 +191,20 @@ tests/              # 测试
 - **技术方案**：调 reward 设计/网络/ε 衰减/学习率；quick 验证管线，full 追求 max-tile 中位数≥512；记录基线对比。
 - **风险点**：收敛不确定性最高；预留多轮调参，必要时调整 reward 塑形(A-7)。
 - **DoD**：S2 达标（max-tile 中位数≥512）或给出充分的趋势证据 + 复盘。关联 TC-048。
-- **状态**：⚠️ DONE-训练完成/S2未达标（2026-06-07）
-- **训练结果**：`runs/2026-06-07_13-57-22_full`，250k 步，MPS，耗时 502s，1827 episodes；训练中单局 max_tile 达 512，eval best_median=256。
-- **正式评估(100局)**：trained median=128, max=512, score_mean=2200；random median=128；**S2 FAIL（<512）**。
-- **复盘**：reward 塑形 + 250k 步有学习信号（超随机 score、偶发 512），但评估中位数不稳定未达 S2；后续可加长训练/调 reward/增大网络。
+- **状态**：⚠️ DONE — v2 调参 + full_v2 600k 训练完成，S2 仍未达标（2026-06-07）
+- **v1 训练结果**：`runs/2026-06-07_13-57-22_full`，250k 步，best_median=256；正式评估 median=128, max=512，**S2 FAIL**。
+- **v2 代码改动**：
+  - `merge_reward_scale` 合并得分缩放（默认 1.0，v2 用 0.05）
+  - `reward_milestones` 里程碑奖励（128/256/512/1024）
+  - DQN `learn()` TD 目标对 next 合法动作做 masking
+  - replay buffer 存储 `next_legal_mask`
+- **v2 配置**：`configs/full_v2_smoke.yaml`（50k）、`configs/full_v2.yaml`（600k）
+- **烟雾结果** `runs/2026-06-07_14-43-32_full_v2_smoke`：50k 步，108s，418 ep；best_median=128；训练中出现 max_tile=256；正式评估 median=64, max=512。**阶段1未过线（median>192）**，但 max 达 512 有信号。
+- **人类决策**：✅ RUN_FULL（2026-06-07）
+- **full_v2 训练结果** `runs/2026-06-07_14-48-35_full_v2`：600k 步，MPS，1333s（~22min），4880 ep；step 550k 更新 best_median=**256**；训练末期单局 max_tile=256。
+- **正式评估(100局)**：trained median=**128**, max=**512**, score_mean=2206；random median=128；**S2 FAIL**；**1024 未出现**。
+- **v2 复盘**：较 v1 训练期 best_median 持平(256)，长训练未带来评估 median 提升；偶发 512 依旧。
+- **v3 结构奖励**（2026-06-07）：`board.structure_score`（角落锚定+单调性+平滑度），`reward_structure_coef` 按结构分增量塑形；配置 `full_v3.yaml` / `full_v3_smoke.yaml`。
 
 ### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
 - **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium

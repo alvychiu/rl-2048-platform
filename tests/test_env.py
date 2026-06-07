@@ -107,6 +107,31 @@ def test_illegal_move_marked_in_info():
     assert reward == env.illegal_penalty
 
 
+def test_merge_reward_scale_reduces_merge_component():
+    env = make_env(merge_reward_scale=0.05)
+    env.reset(seed=0)
+    env._board = np.array(
+        [[2, 2, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.int64
+    )
+    _, reward, _, _, _ = env.step(2)  # LEFT merges two 2s -> gained 4
+    assert reward == pytest.approx(4 * 0.05)
+
+
+def test_milestone_bonus_on_new_max():
+    env = make_env(
+        merge_reward_scale=0.0,
+        reward_milestones={128: 2.0, 256: 8.0},
+    )
+    env.reset(seed=0)
+    env._prev_max_tile = 64
+    env._board = np.array(
+        [[64, 64, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.int64
+    )
+    _, reward, _, _, info = env.step(2)
+    assert info["max_tile"] == 128
+    assert reward >= 2.0
+
+
 def test_tc046_reproducible_with_seed():
     env1, env2 = make_env(), make_env()
     o1, _ = env1.reset(seed=123)

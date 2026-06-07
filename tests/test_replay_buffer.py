@@ -28,12 +28,21 @@ def test_sample_shapes():
     buf = ReplayBuffer(capacity=100, obs_shape=(4, 4))
     for i in range(50):
         buf.push(_obs(i), i % 4, float(i), _obs(i + 1), i % 2 == 0)
-    obs, act, rew, nobs, done = buf.sample(16, rng=np.random.default_rng(0))
+    obs, act, rew, nobs, done, legal = buf.sample(16, rng=np.random.default_rng(0))
     assert obs.shape == (16, 4, 4)
     assert act.shape == (16,)
     assert rew.shape == (16,)
     assert nobs.shape == (16, 4, 4)
     assert done.shape == (16,)
+    assert legal.shape == (16, 4)
+
+
+def test_push_stores_next_legal_mask():
+    buf = ReplayBuffer(capacity=10, obs_shape=(4, 4))
+    mask = np.array([True, False, True, False])
+    buf.push(_obs(0), 0, 0.0, _obs(1), False, next_legal_mask=mask)
+    _, _, _, _, _, legal = buf.sample(1, rng=np.random.default_rng(0))
+    assert np.array_equal(legal[0], mask)
 
 
 def test_tc021_sample_more_than_size_raises():

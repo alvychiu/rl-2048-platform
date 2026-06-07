@@ -1,0 +1,41 @@
+# full_v3 烟雾：v2 + 结构奖励（角落/单调/平滑），50k 步验证。
+total_steps: 50000
+learning_starts: 5000
+train_freq: 4
+target_update_interval: 5000
+
+lr: 0.0001
+gamma: 0.995
+batch_size: 128
+buffer_size: 200000
+hidden_sizes: [512, 512, 256]
+
+eps_start: 1.0
+eps_end: 0.05
+eps_decay_steps: 40000
+
+log_dir: runs
+save_every: 25000
+eval_every: 25000
+eval_episodes: 50
+
+max_steps: 10000
+illegal_penalty: -0.1
+merge_reward_scale: 0.05
+reward_empty_coef: 0.15
+reward_new_max_bonus: 8.0
+reward_milestones:
+  128: 2
+  256: 8
+  512: 25
+  1024: 80
+
+# 结构奖励：鼓励大 tile 锚定角落 + 蛇形单调 + 邻接平滑
+reward_structure_coef: 1.0
+reward_structure_corner: 2.0
+reward_structure_monotonicity: 0.3
+reward_structure_smoothness: 0.05
+
+seed: 42
+device: auto
+run_name: full_v3_smoke

@@ -22,8 +22,14 @@ class Config:
     # 环境
     max_steps: int = 5000
     illegal_penalty: float = -1.0
+    merge_reward_scale: float = 1.0
     reward_empty_coef: float = 0.0
     reward_new_max_bonus: float = 0.0
+    reward_milestones: dict[int, float] = field(default_factory=dict)
+    reward_structure_coef: float = 0.0
+    reward_structure_corner: float = 2.0
+    reward_structure_monotonicity: float = 0.3
+    reward_structure_smoothness: float = 0.05
 
     # 训练总量
     total_steps: int = 20000
@@ -66,6 +72,24 @@ class Config:
                     isinstance(x, int) for x in value
                 ):
                     raise TypeError("config field 'hidden_sizes' must be list[int]")
+                continue
+            if f.name == "reward_milestones":
+                if not isinstance(value, dict):
+                    raise TypeError(
+                        "config field 'reward_milestones' must be dict[int, float]"
+                    )
+                normalized: dict[int, float] = {}
+                for k, v in value.items():
+                    if isinstance(k, bool) or not isinstance(k, int):
+                        raise TypeError(
+                            "config field 'reward_milestones' keys must be int"
+                        )
+                    if isinstance(v, bool) or not isinstance(v, (int, float)):
+                        raise TypeError(
+                            "config field 'reward_milestones' values must be float"
+                        )
+                    normalized[int(k)] = float(v)
+                setattr(self, f.name, normalized)
                 continue
             # 解析注解（dataclass 下 f.type 可能是字符串）
             if expected in ("int", int):

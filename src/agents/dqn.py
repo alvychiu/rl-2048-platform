@@ -97,7 +97,7 @@ class DQNAgent:
 
     def learn(self, batch) -> float:
         """一次梯度更新，返回 loss 标量。"""
-        obs, actions, rewards, next_obs, dones = batch
+        obs, actions, rewards, next_obs, dones, next_legal_masks = batch
         obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device)
         next_t = torch.as_tensor(next_obs, dtype=torch.float32, device=self.device)
         act_t = torch.as_tensor(actions, dtype=torch.int64, device=self.device)
@@ -106,7 +106,15 @@ class DQNAgent:
 
         q_values = self.q_net(obs_t).gather(1, act_t.unsqueeze(1)).squeeze(1)
         with torch.no_grad():
-            next_q = self.target_net(next_t).max(dim=1).values
+            next_q_all = self.target_net(next_t)
+            legal_t = torch.as_tensor(
+                next_legal_masks, dtype=torch.bool, device=self.device
+            )
+            next_q_all = next_q_all.masked_fill(~legal_t, float("-inf"))
+            next_q = next_q_all.max(dim=1).values
+            next_q = torch.where(
+                torch.isinf(next_q), torch.zeros_like(next_q), next_q
+            )
             target = rew_t + self.gamma * next_q * (1.0 - done_t)
 
         loss = self.loss_fn(q_values, target)
