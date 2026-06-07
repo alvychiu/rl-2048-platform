@@ -1,0 +1,55 @@
+# full_v4：快 exploitation + 强推 512 + 弱化 corner 副作用 + 稳定训练 + 后期 2048 空间
+#
+# 相对 v3 的核心调整：
+# - eps 在 160k 步降至 0.01（总 800k 的前 20% 即进入 exploitation）
+# - 512 里程碑 60 + 高 tile 维持奖励 + 更强 new_max
+# - corner 仅 max>=128 时生效、关闭 log 放大、权重降至 0.25
+# - lr↓ batch↑ target 更新变慢 + 梯度裁剪
+# - gamma=0.998, max_steps=15000 给长局/2048 留空间
+total_steps: 800000
+learning_starts: 8000
+train_freq: 4
+target_update_interval: 8000
+
+lr: 0.00005
+gamma: 0.998
+batch_size: 256
+buffer_size: 300000
+hidden_sizes: [512, 512, 256]
+grad_clip_max_norm: 5.0
+
+eps_start: 1.0
+eps_end: 0.01
+eps_decay_steps: 160000
+
+log_dir: runs
+save_every: 50000
+eval_every: 50000
+eval_episodes: 50
+
+max_steps: 15000
+illegal_penalty: -0.1
+merge_reward_scale: 0.03
+reward_empty_coef: 0.12
+reward_new_max_bonus: 15.0
+reward_milestones:
+  128: 3
+  256: 15
+  512: 60
+  1024: 150
+
+# 高 tile 维持：max>=256 后每步给小额奖励，鼓励向 512 推进
+reward_high_tile_coef: 0.08
+reward_high_tile_min: 256
+
+# 结构奖励弱化 corner，主要靠单调/平滑引导
+reward_structure_coef: 0.3
+reward_structure_corner: 0.25
+reward_structure_corner_log_scale: false
+reward_structure_corner_min_tile: 128
+reward_structure_monotonicity: 0.35
+reward_structure_smoothness: 0.04
+
+seed: 42
+device: auto
+run_name: full_v4

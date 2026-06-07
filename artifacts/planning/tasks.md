@@ -53,7 +53,7 @@ tests/              # 测试
 | T-17 | 一键启动(Makefile/脚本: train/eval/board) | US-09 | T-14,T-16 | S | Low | ✅ DONE |
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
-| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | 🔄 DOING(v3结构奖励) |
+| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | 🔄 DOING(v4调参) |
 | T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20
@@ -205,6 +205,9 @@ tests/              # 测试
 - **正式评估(100局)**：trained median=**128**, max=**512**, score_mean=2206；random median=128；**S2 FAIL**；**1024 未出现**。
 - **v2 复盘**：较 v1 训练期 best_median 持平(256)，长训练未带来评估 median 提升；偶发 512 依旧。
 - **v3 结构奖励**（2026-06-07）：`board.structure_score`（角落锚定+单调性+平滑度），`reward_structure_coef` 按结构分增量塑形；配置 `full_v3.yaml` / `full_v3_smoke.yaml`。
+- **full_v3 训练结果** `runs/2026-06-07_15-27-39_full_v3`：600k 步，1427s；best_median=128（退步）；正式评估 median=128, max=512，**S2 FAIL**。
+- **v4 配置**（2026-06-07）：`full_v4.yaml`（800k）— 快 exploitation(eps→0.01@160k)、强推512(里程碑60+high_tile)、弱化corner(log关闭+min128+权重0.25)、稳定训练(lr↓/batch↑/grad_clip)、后期空间(gamma0.998/max_steps15k)。
+- **人类决策**：✅ 启动 full_v4 训练（2026-06-07）
 
 ### T-21 — 2048 GUI（pygame 手动游玩 + AI 演示）
 - **关联 Story**：US-12 ｜ **依赖**：T-05, T-11, T-13 ｜ **复杂度**：M ｜ **风险**：Medium

@@ -38,6 +38,10 @@ def evaluate_agent(agent: DQNAgent, cfg: Config, episodes: int, seed: int) -> di
         reward_structure_corner=cfg.reward_structure_corner,
         reward_structure_monotonicity=cfg.reward_structure_monotonicity,
         reward_structure_smoothness=cfg.reward_structure_smoothness,
+        reward_structure_corner_log_scale=cfg.reward_structure_corner_log_scale,
+        reward_structure_corner_min_tile=cfg.reward_structure_corner_min_tile,
+        reward_high_tile_coef=cfg.reward_high_tile_coef,
+        reward_high_tile_min=cfg.reward_high_tile_min,
     )
     max_tiles, scores = [], []
     for i in range(episodes):
@@ -72,6 +76,10 @@ def train(cfg: Config) -> dict:
         reward_structure_corner=cfg.reward_structure_corner,
         reward_structure_monotonicity=cfg.reward_structure_monotonicity,
         reward_structure_smoothness=cfg.reward_structure_smoothness,
+        reward_structure_corner_log_scale=cfg.reward_structure_corner_log_scale,
+        reward_structure_corner_min_tile=cfg.reward_structure_corner_min_tile,
+        reward_high_tile_coef=cfg.reward_high_tile_coef,
+        reward_high_tile_min=cfg.reward_high_tile_min,
     )
     agent = DQNAgent(
         obs_shape=(4, 4),
@@ -83,6 +91,7 @@ def train(cfg: Config) -> dict:
         eps_end=cfg.eps_end,
         eps_decay_steps=cfg.eps_decay_steps,
         target_update_interval=cfg.target_update_interval,
+        grad_clip_max_norm=cfg.grad_clip_max_norm,
         device=cfg.device,
     )
     buffer = ReplayBuffer(capacity=cfg.buffer_size, obs_shape=(4, 4))

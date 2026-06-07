@@ -24,6 +24,20 @@ def test_load_full_yaml():
     assert cfg.hidden_sizes == [256, 256, 128]
 
 
+def test_load_full_v4_yaml():
+    cfg = Config.from_yaml("configs/full_v4.yaml")
+    assert cfg.total_steps == 800000
+    assert cfg.eps_end == 0.01
+    assert cfg.eps_decay_steps == 160000
+    assert cfg.reward_milestones[512] == 60.0
+    assert cfg.reward_structure_corner_log_scale is False
+    assert cfg.reward_structure_corner_min_tile == 128
+    assert cfg.reward_high_tile_coef == 0.08
+    assert cfg.grad_clip_max_norm == 5.0
+    assert cfg.gamma == 0.998
+    assert cfg.max_steps == 15000
+
+
 def test_load_full_v3_smoke_yaml():
     cfg = Config.from_yaml("configs/full_v3_smoke.yaml")
     assert cfg.reward_structure_coef == 1.0

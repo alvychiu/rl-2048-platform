@@ -33,6 +33,39 @@ def test_structure_score_higher_for_corner_layout():
     assert B.structure_score(corner) > B.structure_score(scattered)
 
 
+def test_corner_log_scale_disabled_uses_binary_corner():
+    board = np.array(
+        [[512, 64, 16, 4], [32, 8, 4, 2], [8, 4, 2, 0], [4, 2, 0, 0]],
+        dtype=np.int64,
+    )
+    with_log = B.structure_score(
+        board,
+        corner_weight=1.0,
+        monotonicity_weight=0.0,
+        smoothness_weight=0.0,
+        corner_log_scale=True,
+    )
+    no_log = B.structure_score(
+        board,
+        corner_weight=1.0,
+        monotonicity_weight=0.0,
+        smoothness_weight=0.0,
+        corner_log_scale=False,
+    )
+    assert no_log == 1.0
+    assert with_log < no_log
+
+
+def test_corner_min_tile_suppresses_early_bonus():
+    board = np.array(
+        [[64, 32, 16, 8], [32, 16, 8, 4], [16, 8, 4, 2], [8, 4, 2, 0]],
+        dtype=np.int64,
+    )
+    low = B.structure_score(board, corner_min_tile=0, corner_log_scale=False)
+    high = B.structure_score(board, corner_min_tile=128, corner_log_scale=False)
+    assert low > high
+
+
 def test_env_structure_reward_on_improving_layout():
     from src.env.game_2048_env import Game2048Env
 

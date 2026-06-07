@@ -1,0 +1,46 @@
+# full_v4 烟雾：50k 步快速验证 v4 奖励/探索曲线是否合理。
+total_steps: 50000
+learning_starts: 3000
+train_freq: 4
+target_update_interval: 8000
+
+lr: 0.00005
+gamma: 0.998
+batch_size: 256
+buffer_size: 300000
+hidden_sizes: [512, 512, 256]
+grad_clip_max_norm: 5.0
+
+eps_start: 1.0
+eps_end: 0.01
+eps_decay_steps: 10000
+
+log_dir: runs
+save_every: 25000
+eval_every: 25000
+eval_episodes: 50
+
+max_steps: 15000
+illegal_penalty: -0.1
+merge_reward_scale: 0.03
+reward_empty_coef: 0.12
+reward_new_max_bonus: 15.0
+reward_milestones:
+  128: 3
+  256: 15
+  512: 60
+  1024: 150
+
+reward_high_tile_coef: 0.08
+reward_high_tile_min: 256
+
+reward_structure_coef: 0.3
+reward_structure_corner: 0.25
+reward_structure_corner_log_scale: false
+reward_structure_corner_min_tile: 128
+reward_structure_monotonicity: 0.35
+reward_structure_smoothness: 0.04
+
+seed: 42
+device: auto
+run_name: full_v4_smoke

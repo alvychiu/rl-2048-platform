@@ -30,6 +30,10 @@ class Config:
     reward_structure_corner: float = 2.0
     reward_structure_monotonicity: float = 0.3
     reward_structure_smoothness: float = 0.05
+    reward_structure_corner_log_scale: bool = True
+    reward_structure_corner_min_tile: int = 0
+    reward_high_tile_coef: float = 0.0
+    reward_high_tile_min: int = 256
 
     # 训练总量
     total_steps: int = 20000
@@ -43,6 +47,7 @@ class Config:
     batch_size: int = 128
     buffer_size: int = 50000
     hidden_sizes: list[int] = field(default_factory=lambda: [256, 256])
+    grad_clip_max_norm: float = 0.0
 
     # ε-greedy 探索
     eps_start: float = 1.0
@@ -72,6 +77,12 @@ class Config:
                     isinstance(x, int) for x in value
                 ):
                     raise TypeError("config field 'hidden_sizes' must be list[int]")
+                continue
+            if f.name in (
+                "reward_structure_corner_log_scale",
+            ):
+                if not isinstance(value, bool):
+                    raise TypeError(f"config field '{f.name}' must be bool")
                 continue
             if f.name == "reward_milestones":
                 if not isinstance(value, dict):

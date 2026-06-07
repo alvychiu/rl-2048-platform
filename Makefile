@@ -20,6 +20,8 @@ help:
 	@echo "make train CONFIG=configs/full_v2.yaml         # 调参完整(600k)"
 	@echo "make train CONFIG=configs/full_v3_smoke.yaml   # 结构奖励烟雾(50k)"
 	@echo "make train CONFIG=configs/full_v3.yaml         # 结构奖励完整(600k)"
+	@echo "make train CONFIG=configs/full_v4_smoke.yaml   # v4烟雾(50k)"
+	@echo "make train CONFIG=configs/full_v4.yaml         # v4完整(800k)"
 	@echo "make board                启动 TensorBoard (localhost:$(PORT))"
 	@echo "make eval CKPT=runs/<id>/best.pt"
 	@echo "make play                 启动 2048 GUI（手动游玩）"

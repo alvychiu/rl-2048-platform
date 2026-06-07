@@ -31,6 +31,7 @@ class DQNAgent:
         eps_end: float = 0.05,
         eps_decay_steps: int = 10000,
         target_update_interval: int = 1000,
+        grad_clip_max_norm: float = 0.0,
         device: str = "auto",
     ) -> None:
         self.device = resolve_device(device)
@@ -40,6 +41,7 @@ class DQNAgent:
         self.eps_end = float(eps_end)
         self.eps_decay_steps = int(eps_decay_steps)
         self.target_update_interval = int(target_update_interval)
+        self.grad_clip_max_norm = float(grad_clip_max_norm)
 
         input_dim = int(np.prod(obs_shape))
         self.q_net = QNetwork(input_dim, hidden_sizes, num_actions).to(self.device)
@@ -120,6 +122,10 @@ class DQNAgent:
         loss = self.loss_fn(q_values, target)
         self.optimizer.zero_grad()
         loss.backward()
+        if self.grad_clip_max_norm > 0:
+            nn.utils.clip_grad_norm_(
+                self.q_net.parameters(), self.grad_clip_max_norm
+            )
         self.optimizer.step()
 
         self._learn_steps += 1
