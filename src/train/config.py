@@ -22,6 +22,8 @@ class Config:
     # 环境
     max_steps: int = 5000
     illegal_penalty: float = -1.0
+    reward_empty_coef: float = 0.0
+    reward_new_max_bonus: float = 0.0
 
     # 训练总量
     total_steps: int = 20000

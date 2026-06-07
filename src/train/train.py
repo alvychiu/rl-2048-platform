@@ -27,7 +27,12 @@ from src.utils.seeding import set_global_seed
 
 def evaluate_agent(agent: DQNAgent, cfg: Config, episodes: int, seed: int) -> dict:
     """贪心评估若干局，返回 max_tile / score 统计。"""
-    env = Game2048Env(max_steps=cfg.max_steps, illegal_penalty=cfg.illegal_penalty)
+    env = Game2048Env(
+        max_steps=cfg.max_steps,
+        illegal_penalty=cfg.illegal_penalty,
+        reward_empty_coef=cfg.reward_empty_coef,
+        reward_new_max_bonus=cfg.reward_new_max_bonus,
+    )
     max_tiles, scores = [], []
     for i in range(episodes):
         obs, info = env.reset(seed=seed + i)
@@ -50,7 +55,12 @@ def train(cfg: Config) -> dict:
     set_global_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
 
-    env = Game2048Env(max_steps=cfg.max_steps, illegal_penalty=cfg.illegal_penalty)
+    env = Game2048Env(
+        max_steps=cfg.max_steps,
+        illegal_penalty=cfg.illegal_penalty,
+        reward_empty_coef=cfg.reward_empty_coef,
+        reward_new_max_bonus=cfg.reward_new_max_bonus,
+    )
     agent = DQNAgent(
         obs_shape=(4, 4),
         num_actions=4,

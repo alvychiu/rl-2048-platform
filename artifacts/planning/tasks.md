@@ -53,7 +53,7 @@ tests/              # 测试
 | T-17 | 一键启动(Makefile/脚本: train/eval/board) | US-09 | T-14,T-16 | S | Low | ✅ DONE |
 | T-18 | Dockerfile(arm64) | US-09 | T-17 | M | Medium | ⚠️ DONE(构建待验证) |
 | T-19 | README(5分钟复现+开源引用) | US-09 | T-17 | S | Medium | ✅ DONE |
-| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | TODO |
+| T-20 | quick/full 配置调参与收敛验证 | US-05,US-11 | T-14,T-16 | L | High | DOING |
 | T-21 | 2048 GUI（pygame 手动+AI演示） | US-12 | T-05,T-11,T-13 | M | Medium | ✅ DONE |
 
 > 建议执行顺序（拓扑序）：T-01 → T-02 → T-03 → T-04 → T-05 → T-06 → T-07 → T-08 → T-09 → T-10 → T-11 → T-12 → T-13 → T-14 → T-15 → T-16 → T-17 → T-18 → T-19 → T-20

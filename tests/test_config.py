@@ -18,8 +18,10 @@ def test_tc015_load_valid_quick_yaml():
 
 def test_load_full_yaml():
     cfg = Config.from_yaml("configs/full.yaml")
-    assert cfg.total_steps == 300000
+    assert cfg.total_steps == 250000
     assert cfg.run_name == "full"
+    assert cfg.reward_empty_coef > 0
+    assert cfg.hidden_sizes == [256, 256, 128]
 
 
 def test_tc016_missing_required_field(tmp_path):

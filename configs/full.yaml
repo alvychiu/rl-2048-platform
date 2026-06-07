@@ -1,27 +1,30 @@
 # full 配置：追求效果，目标 max-tile 中位数 >= 512（S2）。
-# 在 Apple M2 上以 CPU/MPS 训练，预期 30 分钟 ~ 2 小时收敛取向。
-total_steps: 300000
-learning_starts: 5000
+# Apple M2 (MPS)，预期约 30~90 分钟（视 eval 开销而定）。
+total_steps: 250000
+learning_starts: 8000
 train_freq: 4
 target_update_interval: 2000
 
-lr: 0.0005
+lr: 0.0003
 gamma: 0.99
 batch_size: 128
 buffer_size: 100000
-hidden_sizes: [256, 256]
+hidden_sizes: [256, 256, 128]
 
 eps_start: 1.0
-eps_end: 0.05
-eps_decay_steps: 100000
+eps_end: 0.02
+eps_decay_steps: 180000
 
 log_dir: runs
-save_every: 20000
-eval_every: 20000
-eval_episodes: 50
+save_every: 25000
+eval_every: 25000
+eval_episodes: 25
 
 max_steps: 5000
-illegal_penalty: -1.0
+illegal_penalty: -0.5
+# T-20 reward 塑形：空位奖励 + 创新高方块奖励
+reward_empty_coef: 0.02
+reward_new_max_bonus: 1.5
 
 seed: 42
 device: auto
